@@ -654,6 +654,11 @@
 
     atualizarHojeLabel();
     render();
+
+    window.addEventListener('pageshow', function (e) {
+        // e.persisted === true significa que veio do bfcache
+        render();
+    });
 </script>
 
 </body>
