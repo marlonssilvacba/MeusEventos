@@ -511,6 +511,9 @@
 
     function desenharLista(idUl, eventos) {
         const ul = document.getElementById(idUl);
+        
+        if (!ul) return;
+        
         ul.innerHTML = "";
 
         if (eventos.length === 0) {
@@ -652,11 +655,8 @@
         overlay.className = "overlay-hidden";
     });
 
-    atualizarHojeLabel();
-    render();
-
-    window.addEventListener('pageshow', function (e) {
-        // e.persisted === true significa que veio do bfcache
+    document.addEventListener('DOMContentLoaded', function () {
+        atualizarHojeLabel();
         render();
     });
 </script>
