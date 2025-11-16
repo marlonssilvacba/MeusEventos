@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Eventos" />
+
+<link rel="apple-touch-icon" href="icon.png" />
+
+<title>Eventos</title>
+
+<style>
+    :root {
+        --bg-body: #0f172a;
+        --bg-card: #1e2537;
+        --bg-card-alt: #242c42;
+        --accent: #4f46e5;
+        --accent-soft: rgba(79,70,229,.15);
+        --text-main: #f8fafc;
+        --text-dim: #94a3b8;
+        --border-color: rgba(255,255,255,0.07);
+        --radius-lg: 16px;
+        --radius-md: 10px;
+        --radius-sm: 6px;
+        --font-stack: system-ui, -apple-system, BlinkMacSystemFont, "Inter", "Roboto", "Segoe UI", sans-serif;
+    }
+
+    * {
+        box-sizing: border-box;
+        -webkit-font-smoothing: antialiased;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: var(--font-stack);
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 24px);
+        max-width: 480px;
+        margin: 0 auto;
+        line-height: 1.4;
+    }
+
+    header.app-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .title-block h1 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-main);
+        display: flex;
+        flex-direction: column;
+        line-height: 1.3;
+    }
+
+    .title-block span.sub {
+        font-size: .8rem;
+        font-weight: 400;
+        color: var(--text-dim);
+    }
+
+    button.install-btn {
+        appearance: none;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: .75rem;
+        font-weight: 600;
+        border: 0;
+        border-radius: var(--radius-md);
+        padding: 8px 12px;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+
+    .hint-storage {
+        font-size: .7rem;
+        color: var(--text-dim);
+        line-height: 1.3;
+        margin-top: 4px;
+    }
+
+    .card {
+        background: radial-gradient(circle at 0% 0%, rgba(79,70,229,.18) 0%, rgba(30,37,55,0) 60%), var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+        box-shadow: 0 30px 80px rgba(0,0,0,.7);
+        margin-bottom: 20px;
+    }
+
+    .card-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .card-header .card-title {
+        font-size: .9rem;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+
+    .card-header .card-hint {
+        font-size: .7rem;
+        color: var(--text-dim);
+    }
+
+    form#event-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+
+    .input-wrap {
+        display: flex;
+        flex-direction: column;
+    }
+
+    label {
+        font-size: .7rem;
+        color: var(--text-dim);
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+
+    input[type="text"],
+    input[type="date"] {
+        width: 100%;
+        background: var(--bg-card-alt);
+        border: 1px solid var(--border-color);
+        color: var(--text-main);
+        font-size: .9rem;
+        line-height: 1.2;
+        border-radius: var(--radius-md);
+        padding: 12px;
+    }
+
+    input[type="text"]::placeholder {
+        color: #64748b;
+    }
+
+    button#add-btn {
+        width: 100%;
+        background: var(--accent);
+        color: #fff;
+        border: 0;
+        border-radius: var(--radius-md);
+        font-size: .9rem;
+        font-weight: 600;
+        padding: 14px 12px;
+        line-height: 1.2;
+        box-shadow: 0 20px 40px rgba(79,70,229,.5);
+    }
+
+    .list-block {
+        margin-bottom: 24px;
+    }
+
+    .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 8px;
+    }
+
+    .list-header .list-title {
+        font-size: .8rem;
+        font-weight: 600;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .badge-upcoming,
+    .badge-past {
+        font-size: .6rem;
+        font-weight: 500;
+        background: var(--bg-card-alt);
+        border-radius: var(--radius-sm);
+        padding: 3px 6px;
+        line-height: 1.1;
+        color: var(--text-dim);
+        border: 1px solid var(--border-color);
+    }
+
+    ul.event-list {
+        list-style: none;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 30px 80px rgba(0,0,0,.6);
+        overflow: hidden;
+    }
+
+    li.event-item {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 8px;
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    li.event-item:last-child {
+        border-bottom: 0;
+    }
+
+    .evt-main {
+        min-width: 0;
+    }
+
+    .evt-title {
+        font-size: .9rem;
+        font-weight: 500;
+        color: var(--text-main);
+        line-height: 1.3;
+        word-break: break-word;
+    }
+
+    .evt-date {
+        font-size: .7rem;
+        color: var(--text-dim);
+        margin-top: 2px;
+    }
+
+    .evt-diff {
+        text-align: right;
+        font-size: .8rem;
+        font-weight: 600;
+        line-height: 1.3;
+        min-width: 72px;
+    }
+
+    .evt-diff.future {
+        color: #4ade80;
+    }
+
+    .evt-diff.past {
+        color: #f87171;
+    }
+
+    .evt-del {
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-end;
+    }
+
+    .del-btn {
+        background: transparent;
+        border: 0;
+        color: #64748b;
+        font-size: .8rem;
+        line-height: 1;
+        padding: 4px 6px;
+        border-radius: var(--radius-sm);
+    }
+
+    .del-btn:active {
+        background: rgba(255,255,255,0.07);
+        color: #f87171;
+    }
+
+    footer {
+        text-align: center;
+        font-size: .65rem;
+        color: var(--text-dim);
+        margin-top: 40px;
+        padding-bottom: 40px;
+        line-height: 1.4;
+    }
+
+    .overlay-hidden { display: none; }
+    .overlay {
+        position: fixed;
+        z-index: 999;
+        inset: 0;
+        background: rgba(0,0,0,.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+    }
+
+    .install-card {
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 30px 80px rgba(0,0,0,.8);
+        max-width: 360px;
+        width: 100%;
+        padding: 20px 16px 16px;
+        color: var(--text-main);
+    }
+
+    .install-card h2 {
+        font-size: .95rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    .install-steps {
+        font-size: .8rem;
+        color: var(--text-dim);
+        line-height: 1.4;
+        margin-bottom: 16px;
+    }
+
+    .close-install {
+        width: 100%;
+        text-align: center;
+        background: var(--accent);
+        color: #fff;
+        border: 0;
+        border-radius: var(--radius-md);
+        font-size: .8rem;
+        font-weight: 600;
+        padding: 10px 12px;
+        line-height: 1.2;
+        box-shadow: 0 20px 40px rgba(79,70,229,.5);
+    }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+    <div class="title-block">
+        <h1>
+            Meus Eventos
+            <span class="sub" id="today-label"></span>
+        </h1>
+        <div class="hint-storage">
+            Se você abriu pelo app Arquivos, os dados não salvam.<br/>
+            Abra no Safari para ele lembrar seus eventos.
+        </div>
+    </div>
+
+    <button class="install-btn" id="install-btn">Instalar</button>
+</header>
+
+<section class="card">
+    <div class="card-header">
+        <div class="card-title">Novo evento</div>
+        <div class="card-hint">Fica salvo só no seu iPhone</div>
+    </div>
+
+    <form id="event-form">
+        <div class="input-wrap">
+            <label for="evt-nome">Descrição</label>
+            <input id="evt-nome" type="text" placeholder="Ex: Revisão do carro" autocomplete="off" />
+        </div>
+
+        <div class="input-wrap">
+            <label for="evt-data">Data</label>
+            <input id="evt-data" type="date" />
+        </div>
+
+        <button id="add-btn" type="submit">+ Adicionar</button>
+    </form>
+</section>
+
+<section class="list-block">
+    <div class="list-header">
+        <div class="list-title">
+            <span>Próximos eventos</span>
+            <span class="badge-upcoming" id="count-upcoming">0</span>
+        </div>
+    </div>
+    <ul class="event-list" id="upcoming-list">
+    </ul>
+</section>
+
+<section class="list-block">
+    <div class="list-header">
+        <div class="list-title">
+            <span>Eventos passados</span>
+            <span class="badge-past" id="count-past">0</span>
+        </div>
+    </div>
+    <ul class="event-list" id="past-list">
+    </ul>
+</section>
+
+<footer>
+    Seus dados não saem do aparelho.
+</footer>
+
+<div class="overlay-hidden" id="install-overlay">
+    <div class="overlay">
+        <div class="install-card">
+            <h2>Adicionar na tela inicial</h2>
+            <div class="install-steps" id="install-steps"></div>
+            <button class="close-install" id="close-install">Entendi</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function hojeSemHora() {
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        return hoje;
+    }
+
+    function diffDias(dataStr) {
+        if (!dataStr) return null;
+        const base = hojeSemHora();
+        const alvo = new Date(dataStr + "T00:00:00");
+        alvo.setHours(0,0,0,0);
+        const msPorDia = 1000 * 60 * 60 * 24;
+        return Math.round((alvo - base) / msPorDia);
+    }
+
+    function formatarDataBR(strDataISO) {
+        if (!strDataISO) return "--/--/----";
+        const [ano, mes, dia] = strDataISO.split("-");
+        return `${dia}/${mes}/${ano}`;
+    }
+
+    function textoDiferenca(diasDiff) {
+        if (diasDiff === null) return "—";
+
+        if (diasDiff >= 0) {
+            if (diasDiff === 0) return "É hoje";
+            if (diasDiff === 1) return "Falta 1 dia";
+            return `Faltam ${diasDiff} dias`;
+        } else {
+            const passados = Math.abs(diasDiff);
+            if (passados < 365) {
+                if (passados === 1) return "Foi há 1 dia";
+                return `Foi há ${passados} dias`;
+            } else {
+                const anos = Math.floor(passados / 365);
+                if (anos === 1) return "Foi há 1 ano";
+                return `Foi há ${anos} anos`;
+            }
+        }
+    }
+
+    const STORAGE_KEY = "meus_eventos_v1";
+
+    function carregarEventos() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return [];
+            return parsed;
+        } catch(e) {
+            console.warn("Falha ao carregar eventos", e);
+            return [];
+        }
+    }
+
+    function salvarEventos(lista) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+        } catch(e) {
+            console.warn("Falha ao salvar eventos", e);
+        }
+    }
+
+    function removerEvento(idx) {
+        const lista = carregarEventos();
+        if (idx < 0 || idx >= lista.length) return;
+        lista.splice(idx,1);
+        salvarEventos(lista);
+        render();
+    }
+
+    function render() {
+        const lista = carregarEventos();
+
+        const futuros = [];
+        const passados = [];
+
+        lista.forEach((evt, indexOriginal) => {
+            const d = diffDias(evt.data);
+            const row = { ...evt, diff: d, __idx: indexOriginal };
+
+            if (d === null) {
+                return;
+            }
+
+            if (d >= 0) {
+                futuros.push(row);
+            } else {
+                passados.push(row);
+            }
+        });
+
+        futuros.sort((a,b) => a.diff - b.diff);
+        passados.sort((a,b) => a.diff - b.diff);
+
+        desenharLista("upcoming-list", futuros);
+        desenharLista("past-list", passados);
+
+        document.getElementById("count-upcoming").textContent = futuros.length;
+        document.getElementById("count-past").textContent = passados.length;
+    }
+
+    function desenharLista(idUl, eventos) {
+        const ul = document.getElementById(idUl);
+        ul.innerHTML = "";
+
+        if (eventos.length === 0) {
+            const vazioLi = document.createElement("li");
+            vazioLi.className = "event-item";
+            vazioLi.innerHTML = `
+                <div class="evt-main">
+                    <div class="evt-title" style="color:var(--text-dim);font-weight:400">
+                        Nenhum evento
+                    </div>
+                    <div class="evt-date" style="color:var(--text-dim);">
+                        ---
+                    </div>
+                </div>
+                <div class="evt-diff" style="color:var(--text-dim);">—</div>
+                <div class="evt-del"></div>
+            `;
+            ul.appendChild(vazioLi);
+            return;
+        }
+
+        eventos.forEach(evt => {
+            const li = document.createElement("li");
+            li.className = "event-item";
+
+            const diffText = textoDiferenca(evt.diff);
+            const diffClass = (evt.diff !== null && evt.diff >= 0) ? "future" : "past";
+
+            li.innerHTML = `
+                <div class="evt-main">
+                    <div class="evt-title">${escapeHtml(evt.nome || "")}</div>
+                    <div class="evt-date">${formatarDataBR(evt.data)}</div>
+                </div>
+                <div class="evt-diff ${diffClass}">${diffText}</div>
+                <div class="evt-del">
+                    <button class="del-btn" aria-label="Excluir">✕</button>
+                </div>
+            `;
+
+            li.querySelector(".del-btn").addEventListener("click", () => {
+                if (confirm("Remover este evento?")) {
+                    removerEvento(evt.__idx);
+                }
+            });
+
+            ul.appendChild(li);
+        });
+    }
+
+    function escapeHtml(str){
+        return str.replace(/[&<>"']/g, function(m){
+            const map = {
+                "&":"&amp;",
+                "<":"&lt;",
+                ">":"&gt;",
+                '"':"&quot;",
+                "'":"&#39;"
+            };
+            return map[m];
+        });
+    }
+
+    const form = document.getElementById("event-form");
+    const nomeInput = document.getElementById("evt-nome");
+    const dataInput = document.getElementById("evt-data");
+
+    form.addEventListener("submit", function(e){
+        e.preventDefault();
+        const nome = nomeInput.value.trim();
+        const data = dataInput.value;
+
+        if(!nome || !data){
+            alert("Preencha a descrição e a data 👍");
+            return;
+        }
+
+        const lista = carregarEventos();
+        lista.push({ nome, data });
+        salvarEventos(lista);
+
+        nomeInput.value = "";
+        dataInput.value = "";
+
+        render();
+    });
+
+    function atualizarHojeLabel(){
+        const hoje = hojeSemHora();
+        const dia = String(hoje.getDate()).padStart(2,"0");
+        const mes = String(hoje.getMonth()+1).padStart(2,"0");
+        const ano = hoje.getFullYear();
+        const lbl = document.getElementById("today-label");
+        lbl.textContent = `${dia}/${mes}/${ano}`;
+    }
+
+    const installBtn = document.getElementById("install-btn");
+    const overlay = document.getElementById("install-overlay");
+    const closeInstall = document.getElementById("close-install");
+    const stepsBox = document.getElementById("install-steps");
+
+    function isStandaloneMode() {
+        return (
+            window.matchMedia('(display-mode: standalone)').matches ||
+            window.navigator.standalone === true
+        );
+    }
+
+    function abrirInstrucoesInstalacao() {
+        if (isStandaloneMode()) {
+            stepsBox.innerHTML = `
+                <p>Este app já está na sua tela inicial ✅<br/>
+                Você pode abrir direto pelo ícone.</p>
+            `;
+        } else {
+            stepsBox.innerHTML = `
+                <p>Para adicionar este app na tela inicial do iPhone:</p>
+                <ol style="padding-left:18px;margin-top:8px;">
+                    <li style="margin-bottom:6px;">
+                        Toque no botão <strong>Compartilhar</strong> 
+                        (quadrado com seta para cima).
+                    </li>
+                    <li style="margin-bottom:6px;">
+                        Toque em <strong>Adicionar à Tela de Início</strong>.
+                    </li>
+                    <li>
+                        Confirme o nome e toque em <strong>Adicionar</strong>.
+                    </li>
+                </ol>
+                <p style="margin-top:10px;font-size:.7rem;color:var(--text-dim);">
+                    Depois disso ele abre em tela cheia, como um app.
+                </p>
+            `;
+        }
+        overlay.className = ""; 
+    }
+
+    installBtn.addEventListener("click", abrirInstrucoesInstalacao);
+    closeInstall.addEventListener("click", () => {
+        overlay.className = "overlay-hidden";
+    });
+
+    atualizarHojeLabel();
+    render();
+</script>
+
+</body>
+</html>
