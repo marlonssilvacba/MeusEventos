@@ -345,13 +345,16 @@
             Meus Eventos
             <span class="sub" id="today-label"></span>
         </h1>
+        <div class="hint-storage">
+            Seus eventos ficam salvos no próprio navegador deste aparelho.
+        </div>
     </div>
 </header>
 
 <section class="card">
     <div class="card-header">
         <div class="card-title">Novo evento</div>
-        <div class="card-hint">Fica salvo só no seu iPhone</div>
+        <div class="card-hint">Fica salvo só no seu dispositivo</div>
     </div>
 
     <form id="event-form">
@@ -376,8 +379,7 @@
             <span class="badge-upcoming" id="count-upcoming">0</span>
         </div>
     </div>
-    <ul class="event-list" id="upcoming-list">
-    </ul>
+    <ul class="event-list" id="upcoming-list"></ul>
 </section>
 
 <section class="list-block">
@@ -387,12 +389,11 @@
             <span class="badge-past" id="count-past">0</span>
         </div>
     </div>
-    <ul class="event-list" id="past-list">
-    </ul>
+    <ul class="event-list" id="past-list"></ul>
 </section>
 
 <footer>
-    Seus dados não saem do aparelho.
+    Seus dados não saem do aparelho. Nenhum envio para servidores externos.
 </footer>
 
 <div class="overlay-hidden" id="install-overlay">
@@ -406,6 +407,7 @@
 </div>
 
 <script>
+    // ========= Util de datas =========
     function hojeSemHora() {
         const hoje = new Date();
         hoje.setHours(0,0,0,0);
@@ -447,6 +449,7 @@
         }
     }
 
+    // ========= Storage =========
     const STORAGE_KEY = "meus_eventos_v1";
 
     function carregarEventos() {
@@ -478,42 +481,11 @@
         render();
     }
 
-    function render() {
-        const lista = carregarEventos();
-
-        const futuros = [];
-        const passados = [];
-
-        lista.forEach((evt, indexOriginal) => {
-            const d = diffDias(evt.data);
-            const row = { ...evt, diff: d, __idx: indexOriginal };
-
-            if (d === null) {
-                return;
-            }
-
-            if (d >= 0) {
-                futuros.push(row);
-            } else {
-                passados.push(row);
-            }
-        });
-
-        futuros.sort((a,b) => a.diff - b.diff);
-        passados.sort((a,b) => a.diff - b.diff);
-
-        desenharLista("upcoming-list", futuros);
-        desenharLista("past-list", passados);
-
-        document.getElementById("count-upcoming").textContent = futuros.length;
-        document.getElementById("count-past").textContent = passados.length;
-    }
-
+    // ========= Render =========
     function desenharLista(idUl, eventos) {
         const ul = document.getElementById(idUl);
-        
-        if (!ul) return;
-        
+        if (!ul) return; // proteção contra null
+
         ul.innerHTML = "";
 
         if (eventos.length === 0) {
@@ -553,14 +525,48 @@
                 </div>
             `;
 
-            li.querySelector(".del-btn").addEventListener("click", () => {
-                if (confirm("Remover este evento?")) {
-                    removerEvento(evt.__idx);
-                }
-            });
+            const btn = li.querySelector(".del-btn");
+            if (btn) {
+                btn.addEventListener("click", () => {
+                    if (confirm("Remover este evento?")) {
+                        removerEvento(evt.__idx);
+                    }
+                });
+            }
 
             ul.appendChild(li);
         });
+    }
+
+    function render() {
+        const lista = carregarEventos();
+
+        const futuros = [];
+        const passados = [];
+
+        lista.forEach((evt, indexOriginal) => {
+            const d = diffDias(evt.data);
+            if (d === null) return;
+
+            const row = { ...evt, diff: d, __idx: indexOriginal };
+
+            if (d >= 0) {
+                futuros.push(row);
+            } else {
+                passados.push(row);
+            }
+        });
+
+        futuros.sort((a,b) => a.diff - b.diff);
+        passados.sort((a,b) => a.diff - b.diff);
+
+        desenharLista("upcoming-list", futuros);
+        desenharLista("past-list", passados);
+
+        const cu = document.getElementById("count-upcoming");
+        const cp = document.getElementById("count-past");
+        if (cu) cu.textContent = futuros.length;
+        if (cp) cp.textContent = passados.length;
     }
 
     function escapeHtml(str){
@@ -576,43 +582,14 @@
         });
     }
 
-    const form = document.getElementById("event-form");
-    const nomeInput = document.getElementById("evt-nome");
-    const dataInput = document.getElementById("evt-data");
-
-    form.addEventListener("submit", function(e){
-        e.preventDefault();
-        const nome = nomeInput.value.trim();
-        const data = dataInput.value;
-
-        if(!nome || !data){
-            alert("Preencha a descrição e a data 👍");
-            return;
-        }
-
-        const lista = carregarEventos();
-        lista.push({ nome, data });
-        salvarEventos(lista);
-
-        nomeInput.value = "";
-        dataInput.value = "";
-
-        render();
-    });
-
     function atualizarHojeLabel(){
         const hoje = hojeSemHora();
         const dia = String(hoje.getDate()).padStart(2,"0");
         const mes = String(hoje.getMonth()+1).padStart(2,"0");
         const ano = hoje.getFullYear();
         const lbl = document.getElementById("today-label");
-        lbl.textContent = `${dia}/${mes}/${ano}`;
+        if (lbl) lbl.textContent = `${dia}/${mes}/${ano}`;
     }
-
-    const installBtn = document.getElementById("install-btn");
-    const overlay = document.getElementById("install-overlay");
-    const closeInstall = document.getElementById("close-install");
-    const stepsBox = document.getElementById("install-steps");
 
     function isStandaloneMode() {
         return (
@@ -621,42 +598,82 @@
         );
     }
 
-    function abrirInstrucoesInstalacao() {
-        if (isStandaloneMode()) {
-            stepsBox.innerHTML = `
-                <p>Este app já está na sua tela inicial ✅<br/>
-                Você pode abrir direto pelo ícone.</p>
-            `;
-        } else {
-            stepsBox.innerHTML = `
-                <p>Para adicionar este app na tela inicial do iPhone:</p>
-                <ol style="padding-left:18px;margin-top:8px;">
-                    <li style="margin-bottom:6px;">
-                        Toque no botão <strong>Compartilhar</strong> 
-                        (quadrado com seta para cima).
-                    </li>
-                    <li style="margin-bottom:6px;">
-                        Toque em <strong>Adicionar à Tela de Início</strong>.
-                    </li>
-                    <li>
-                        Confirme o nome e toque em <strong>Adicionar</strong>.
-                    </li>
-                </ol>
-                <p style="margin-top:10px;font-size:.7rem;color:var(--text-dim);">
-                    Depois disso ele abre em tela cheia, como um app.
-                </p>
-            `;
+    function configurarEventosDOM() {
+        const form = document.getElementById("event-form");
+        const nomeInput = document.getElementById("evt-nome");
+        const dataInput = document.getElementById("evt-data");
+        const installBtn = document.getElementById("install-btn");
+        const overlay = document.getElementById("install-overlay");
+        const closeInstall = document.getElementById("close-install");
+        const stepsBox = document.getElementById("install-steps");
+
+        if (form && nomeInput && dataInput) {
+            form.addEventListener("submit", function(e){
+                e.preventDefault();
+                const nome = nomeInput.value.trim();
+                const data = dataInput.value;
+
+                if(!nome || !data){
+                    alert("Preencha a descrição e a data 👍");
+                    return;
+                }
+
+                const lista = carregarEventos();
+                lista.push({ nome, data });
+                salvarEventos(lista);
+
+                nomeInput.value = "";
+                dataInput.value = "";
+
+                render();
+            });
         }
-        overlay.className = ""; 
+
+        if (installBtn && overlay && closeInstall && stepsBox) {
+            installBtn.addEventListener("click", function () {
+                if (isStandaloneMode()) {
+                    stepsBox.innerHTML = `
+                        <p>Este app já está na sua tela inicial ✅<br/>
+                        Você pode abrir direto pelo ícone.</p>
+                    `;
+                } else {
+                    stepsBox.innerHTML = `
+                        <p>Para adicionar este app na tela inicial do iPhone:</p>
+                        <ol style="padding-left:18px;margin-top:8px;">
+                            <li style="margin-bottom:6px;">
+                                Toque no botão <strong>Compartilhar</strong> 
+                                (quadrado com seta para cima).
+                            </li>
+                            <li style="margin-bottom:6px;">
+                                Toque em <strong>Adicionar à Tela de Início</strong>.
+                            </li>
+                            <li>
+                                Confirme o nome e toque em <strong>Adicionar</strong>.
+                            </li>
+                        </ol>
+                        <p style="margin-top:10px;font-size:.7rem;color:var(--text-dim);">
+                            Depois disso ele abre em tela cheia, como um app.
+                        </p>
+                    `;
+                }
+                overlay.className = ""; 
+            });
+
+            closeInstall.addEventListener("click", () => {
+                overlay.className = "overlay-hidden";
+            });
+        }
     }
 
-    installBtn.addEventListener("click", abrirInstrucoesInstalacao);
-    closeInstall.addEventListener("click", () => {
-        overlay.className = "overlay-hidden";
+    // Inicialização segura
+    document.addEventListener("DOMContentLoaded", function () {
+        atualizarHojeLabel();
+        configurarEventosDOM();
+        render();
     });
 
-    document.addEventListener('DOMContentLoaded', function () {
-        atualizarHojeLabel();
+    // Ajuda com o back-forward cache do Safari
+    window.addEventListener("pageshow", function () {
         render();
     });
 </script>
